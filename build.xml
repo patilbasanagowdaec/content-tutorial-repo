@@ -1,0 +1,237 @@
+<project name="customisations" default="package">
+	<property file="build.properties"/>
+	
+	<property name="war-file-name" value="${project-name}.war" />
+
+	<property name="alf.root.dir" location="${alf.root.dir}" />
+	<property name="war.file" value="${vanilla.war}" />
+	
+	<property name="lib.dir" location="${basedir}/lib" />
+	<property name="alf.lib.dir" location="${alf.lib.dir}" />
+
+	<property name="build.dir" location="${basedir}/build" />
+	<property name="work.dir" value="${basedir}/work" />
+	<property name="dist.dir" value="${basedir}/dist" />
+
+	<!-- Configuration for Explorer -->
+	<property name="src.dir" location="${basedir}/src/main/java" />
+	<property name="jar.filename" value="custom-explorer.jar" />
+	<property name="amp.filename" value="custom-explorer.amp" />
+	<property name="config.dir" value="${basedir}/src/main/amp/config" />
+	<property name="module.properties" value="${basedir}/src/main/amp/module.properties" />
+	<property name="web.dir" value="${basedir}/src/main/amp/web" />
+	<property name="filemapping.properties" value="${basedir}/src/main/amp/file-mapping.properties" />
+	
+
+	<property name="contenxtname" value="${alfresco_contenxt_name}" />
+	
+	
+
+	<target name="setup">
+		<mkdir dir="${work.dir}" />
+		<mkdir dir="${dist.dir}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${work.dir}" />
+		<delete dir="${dist.dir}" />
+	</target>
+
+	<target name="build-explorer-dependencies" depends="setup">
+		<!--	
+		<property name="ZiaAlfresco.dir" location="../ZiaAlfresco"/>
+		<ant antfile="${ZiaAlfresco.dir}/build.xml" dir="${ZiaAlfresco.dir}" target="package" inheritall="false">
+			<property name="alf.lib.dir" value="${alf.lib.dir}" />
+		</ant>
+		<copy todir="${explorer.lib.dir}" file="${ZiaAlfresco.dir}/build/dist/ZiaAlfresco.jar" />
+		-->
+	</target>
+
+	<target name="compile" depends="clean,setup,build-explorer-dependencies" description="Compile the explorer code to class files.">
+		<mkdir dir="${work.dir}/bin" />
+		<javac srcdir="${src.dir}" destdir="${work.dir}/bin" debug="on">
+			<classpath>
+				<fileset dir="${alf.lib.dir}">
+					<include name="*.jar" />
+				</fileset>
+				<fileset dir="${lib.dir}">
+					<include name="*.jar" />
+				</fileset>
+					
+			</classpath>
+		</javac>
+	</target>
+
+	
+	
+	
+	
+	
+	  <target name="package-jar" depends="compile" description="Packages the jar">			
+			<jar destfile="${dist.dir}/${jar.filename}">
+				<fileset dir="${work.dir}/bin" />			
+			</jar>
+		</target>
+	
+	 
+	
+	
+
+	<target name="package-explorer" depends="compile" description="Package the explorer module into an AMP.">
+		<package-amp-impl amp-name="${amp.filename}" config-directory="${config.dir}" jar-name="${jar.filename}" module-properties="${module.properties}" web-directory="${web.dir}" filemapping-properties="${filemapping.properties}" />
+	</target>
+
+	
+
+	<target name="package" description="Package both AMPS, tag the repository">
+		<antcall target="package-explorer" />
+		<delete dir="${work.dir}" />
+		
+	</target>
+
+	<!-- <target name="update-war" depends="package" description="Update the WAR file.  Set -Dwar.file=..." >
+	        <echo>Installing SDK Demo AMP into WAR</echo>
+	        <java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+	            <classpath refid="class.path" />
+	            <arg line="install ${amp.file} ${war.file} -force -verbose"/>
+	        </java>
+	    </target> -->
+	
+	
+	
+	<target name="update-war" depends="package" description="Update the WAR file.  Set -Dwar.file=..." >
+		        <echo>Installing SDK Demo AMP into WAR</echo>
+		        <java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+		            <classpath >
+		            	<fileset dir="${lib.dir}">
+		            			<include name="*.jar" />
+		            	</fileset>
+		            </classpath>		          
+		            <arg line="install ${dist.dir}\${amp.filename} ${war.file} -force -verbose"/>
+		        </java>
+		    </target>
+	
+	
+	
+		<target name="combine-amps" depends="package" description="Update the WAR file.  Update the files with different amo" >
+			        <echo>Installing opencontentAmp  AMP into WAR</echo>
+			        <java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+			            <classpath >
+			            	<fileset dir="${lib.dir}">
+			            			<include name="*.jar" />
+			            	</fileset>
+			            </classpath>		          
+			            <arg line="install ${opencontent.amp.filpath} ${war.file} -force -verbose"/>
+			        </java>
+ 					<echo>Installing Implementation AMP into WAR</echo>
+			        <java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+			            <classpath >
+			            	<fileset dir="${lib.dir}">
+			            			<include name="*.jar" />
+			            	</fileset>
+			            </classpath>		          
+			            <arg line="install ${implementation.amp.filpath} ${war.file} -force -verbose"/>
+			        </java>
+					<java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+						            <classpath >
+						            	<fileset dir="${lib.dir}">
+						            			<include name="*.jar" />
+						            	</fileset>
+						            </classpath>		          
+						            <arg line="install ${cascading.amp.filpath} ${war.file} -force -verbose"/>
+						        </java>
+					<java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+						            <classpath >
+						            	<fileset dir="${lib.dir}">
+						            			<include name="*.jar" />
+						            	</fileset>
+						            </classpath>		          
+						            <arg line="install ${excelingester.amp.filpath} ${war.file} -force -verbose"/>
+						        </java>
+			
+					<echo>Installing IronMountain Base custom code AMP into WAR</echo>
+			        <java dir="." fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+			            <classpath >
+			            	<fileset dir="${lib.dir}">
+			            			<include name="*.jar" />
+			            	</fileset>
+			            </classpath>		          
+			            <arg line="install ${irmcustom.amp.filpath} ${war.file} -force -verbose"/>
+			        </java>
+			
+					<echo>TODO delete the old drci war files to keep things clean</echo>
+			        <echo>Rename the context file name alfresco to drci1</echo>
+					<copy file="${war.file}" tofile="${dist.dir}/${contenxtname}"/>
+			
+			        
+			
+			
+	    </target>
+
+	
+
+	<macrodef name="package-amp-impl">
+		<attribute name="module-properties" />
+		<attribute name="config-directory" />	
+		<attribute name="jar-name" />
+		<attribute name="amp-name" />
+		<attribute name="web-directory" />
+		<attribute name="filemapping-properties" />
+	
+		<sequential>
+			<!-- Make AMP Structure -->
+			<mkdir dir="${work.dir}/config" />
+			<mkdir dir="${work.dir}/lib" />			
+			<!-- config dir -->
+			<copy todir="${work.dir}/config/">
+				<fileset dir="@{config-directory}">
+					<exclude name="**/*~" />
+					<exclude name="**/.gitignore" />
+					<!-- 
+						Amps should not include the global.properties which is machine specific.  This is only for development.
+					-->
+					<exclude name="**/alfresco-global.properties" />
+									
+				</fileset>
+			</copy>
+			<copy todir="${work.dir}/web/">
+				<fileset dir="@{web-directory}">
+					<exclude name="**/*~" />
+					<exclude name="**/.gitignore" />
+				</fileset>
+			</copy>
+
+
+			<!-- copy over the java code -->
+			<jar destfile="${work.dir}/lib/@{jar-name}">
+				<fileset dir="${work.dir}/bin" />
+			</jar>
+			
+        	<!-- copy the jars present in lb folder -->
+			<copy todir="${work.dir}/lib/">
+		          <fileset dir="${lib.dir}">
+		               <include name="*.jar" />
+		          </fileset>
+		    </copy>			
+
+			<delete dir="${work.dir}/bin" />
+
+			<!-- copy the properties file -->
+			<copy file="@{module-properties}" tofile="${work.dir}/module.properties" />
+			<copy file="@{filemapping-properties}" tofile="${work.dir}/file-mapping.properties" />
+			
+			<!-- Replace special token in module.properties 
+			<replace casesensitive="true" file="${work.dir}/module.properties" token="VERSION_STRING" value="${build.number}" />
+			<replace casesensitive="true" file="${work.dir}/module.properties" token="PROJECT_NAME" value="${ant.project.name}" />
+			<replace casesensitive="true" file="${work.dir}/module.properties" token="MODULE_ID" value="${alf.amp.moduleid}" />
+             -->
+			<!-- make the amp -->
+			<zip destfile="${dist.dir}/@{amp-name}" basedir="${work.dir}" />
+			<echo message="Created amp @{amp-name}" />		
+					
+		</sequential>
+	</macrodef>
+
+	
+	
+</project>
